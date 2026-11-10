@@ -50,8 +50,7 @@ bash tool_rcalc_sha256.sh "$PKG_DIR" "$PKG_DIR"/"systemd-boot.sha256.txt"
 wget "http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb" -O "$TMPDIR"/debx
 wget "http://mirrors.kernel.org/ubuntu/pool/main/s/sbsigntool/sbsigntool_0.9.4-3.1ubuntu7_amd64.deb" -O "$TMPDIR"/debx
 wget "http://security.ubuntu.com/ubuntu/pool/main/u/util-linux/libuuid1_2.39.3-9ubuntu6.6_amd64.deb" -O "$TMPDIR"/debx
-
-sudo apt-get install -yy ./"$TMPDIR"/debx/*
+sudo apt-get install -yy ./"$TMPDIR"/debx/*.deb
 
 sbverify --list "$PKG_DIR"/systemd-boot/"$TARGET_DEB2" > "$PKG_DIR"/systemd-boot/"$TARGET_DEB2"".sbverify.txt"
 
