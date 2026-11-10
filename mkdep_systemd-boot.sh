@@ -46,6 +46,6 @@ cp -v "$TARGET_DEB2_PATH" "$PKG_DIR"/systemd-boot
 bash tool_rcalc_sha256.sh "$PKG_DIR" "$PKG_DIR"/"systemd-boot.sha256.txt"
 
 cp -v "$SRC_FILE" "$PKG_DIR"
-sbverify --list "$PKG_DIR"/"$TARGET_DEB2" > "$PKG_DIR"/"$TARGET_DEB2"".sbverify.txt"
+sbverify --list "$PKG_DIR"/systemd-boot/"$TARGET_DEB2" > "$PKG_DIR"/systemd-boot/"$TARGET_DEB2"".sbverify.txt"
 
 rm -rfv "$TMPDIR"
