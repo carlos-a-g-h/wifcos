@@ -13,14 +13,14 @@ jobs:
       - name: Grub2 EFI
         run: bash mkdep_grub2-efi.sh
 
-      - name: SystemD-Boot
-        run: bash mkdep_systemd-boot.sh
+      - name: grubinst
+        run: bash mkdep_grubinst.sh
 
       - name: Grub4DOS
         run: bash mkdep_grub4dos.sh
 
-      - name: grubinst
-        run: bash mkdep_grubinst.sh
+      - name: SystemD-Boot
+        run: bash mkdep_systemd-boot.sh
 
       - name: Run a multi-line script
         run: find dep.*
