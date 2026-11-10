@@ -2,8 +2,8 @@
 
 set -e
 
-sudo apt-get update
-sudo apt-get install -yy sbsigntool
+# sudo apt-get update
+# sudo apt-get install -yy sbsigntool
 
 SRC_FILE="sources.systemd-boot.txt"
 PKG_DIR="dep.systemd-boot"
@@ -43,9 +43,16 @@ mkdir -vp "$PKG_DIR"/systemd-boot
 cp -v "$TARGET_DEB1_PATH" "$PKG_DIR"/systemd-boot
 cp -v "$TARGET_DEB2_PATH" "$PKG_DIR"/systemd-boot
 
+cp -v "$SRC_FILE" "$PKG_DIR"
+
 bash tool_rcalc_sha256.sh "$PKG_DIR" "$PKG_DIR"/"systemd-boot.sha256.txt"
 
-cp -v "$SRC_FILE" "$PKG_DIR"
+wget "http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb" -O "$TMPDIR"/debx
+wget "http://mirrors.kernel.org/ubuntu/pool/main/s/sbsigntool/sbsigntool_0.9.4-3.1ubuntu7_amd64.deb" -O "$TMPDIR"/debx
+wget "http://security.ubuntu.com/ubuntu/pool/main/u/util-linux/libuuid1_2.39.3-9ubuntu6.6_amd64.deb" -O "$TMPDIR"/debx
+
+sudo apt-get install -yy ./"$TMPDIR"/debx/*
+
 sbverify --list "$PKG_DIR"/systemd-boot/"$TARGET_DEB2" > "$PKG_DIR"/systemd-boot/"$TARGET_DEB2"".sbverify.txt"
 
 rm -rfv "$TMPDIR"
