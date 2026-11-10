@@ -1,0 +1,26 @@
+# systemd-boot
+
+## FILE 1
+
+NAME_DEB1 systemd-boot-efi.deb
+
+URL_PAGE1 https://packages.debian.org/sid/amd64/systemd-boot-efi/download
+
+URL_DEB1 http://ftp.us.debian.org/debian/pool/main/s/systemd/systemd-boot-efi_262.2-1_amd64.deb
+
+SHA256_DEB1 d799a650a254940dccf474665ebe073082c1d48ae0a11e58034ae2999ca8fd1d
+
+TARGET_DEB1 systemd-bootx64.efi
+
+## FILE 2
+
+NAME_DEB2 systemd-boot-efi-amd64-signed.deb
+
+URL_PAGE2 https://packages.debian.org/sid/amd64/systemd-boot-efi-amd64-signed/download
+
+URL_DEB2 http://ftp.us.debian.org/debian/pool/main/s/systemd-boot-efi-amd64-signed/systemd-boot-efi-amd64-signed_262.2-1_amd64.deb
+
+SHA256_DEB2 b972c666f3d76899e702fe27865bf5da200b916e7bf4739c69aca0efc79c6d4c
+
+TARGET_DEB2 systemd-bootx64.efi.signed
+

@@ -1,0 +1,17 @@
+# Grub4DOS by chenall
+
+URL_COMMIT https://github.com/chenall/grub4dos/commit/0da21fe58ac4df19ecb84608a6aa81b14326a9fb
+
+URL_TREE https://github.com/chenall/grub4dos/tree/0da21fe58ac4df19ecb84608a6aa81b14326a9fb
+
+URL_RELEASE https://github.com/chenall/grub4dos/releases/tag/2020-08-09-0da21fe
+
+
+URL_FILE https://github.com/chenall/grub4dos/releases/download/2020-08-09-0da21fe/grub4dos-0.4.6a-2020-08-09.7z
+
+NAME_FILE grub4dos.7z
+
+
+HASH_MD5 bf5ff2d89702dee48742f8d2c160e56e
+
+HASH_SHA256 73fd88d7eb231bf0321f6159e0f40e7d4dd18529d8b6f6dde2a0f1b2555c571f

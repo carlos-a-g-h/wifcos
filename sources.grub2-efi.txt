@@ -1,0 +1,20 @@
+# Unofficial Grub2 EFI
+
+URL_COMMIT https://github.com/carlos-a-g-h/ubp-grub2-efi/commit/7b66db69c8a0a29fd1038b4f94a3e30837fd4658
+
+URL_TREE https://github.com/carlos-a-g-h/ubp-grub2-efi/commit/7b66db69c8a0a29fd1038b4f94a3e30837fd4658
+
+URL_RELEASE https://github.com/carlos-a-g-h/ubp-grub2-efi/releases/tag/2026-11-03-12-58
+
+
+URL_FILE https://github.com/carlos-a-g-h/ubp-grub2-efi/releases/download/2026-11-03-12-58/grub2.x86_64.efi
+
+NAME_FILE grub2.x86_64.efi
+
+
+HASH_MD5 4d23fcee0fddb5eadd05c4f0e5ef85ac
+
+HASH_SHA256 f04401009f9a90712d252583ce4e6d284abe5ea976b35578a6205e4a5611f360
+
+
+GRUB_MODULES linux normal part_gpt part_msdos fat ext2 search search_fs_file luks luks2 lvm cryptodisk chain configfile search_fs_uuid search_label ntfs exfat btrfs xfs zfs efi_gop jpeg png font gfxterm gfxterm_background
