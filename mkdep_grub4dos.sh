@@ -2,8 +2,8 @@
 
 set -e
 
-apt-get update
-apt-get install -yy p7zip p7zip-full
+sudo apt-get update
+sudo apt-get install -yy p7zip p7zip-full
 
 SRC_FILE="sources.grub4dos.txt"
 PKG_DIR="dep.grub4dos"

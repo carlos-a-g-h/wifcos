@@ -2,8 +2,8 @@
 
 set -e
 
-apt-get update
-apt-get install -yy sbsigntool
+sudo apt-get update
+sudo apt-get install -yy sbsigntool
 
 SRC_FILE="sources.systemd-boot.txt"
 PKG_DIR="dep.systemd-boot"
