@@ -29,10 +29,10 @@ wget "$URL_DEB2" -O "$TMPDIR"/"$NAME_DEB2"
 CHK=$(sha256sum "$TMPDIR"/"$NAME_DEB2"|grep "$SHA256_DEB2")
 if [ -z "$CHK" ];then exit 1;fi
 
-bash tool_extract_deb.sh "$TMPDIR"/"$NAME_DEB1" "$TMPDIR"/deb1
+bash tool_extr_deb.sh "$TMPDIR"/"$NAME_DEB1" "$TMPDIR"/deb1
 if [ $? -eq 0 ];then true;else exit 1;fi
 
-bash tool_extract_deb.sh "$TMPDIR"/"$NAME_DEB2" "$TMPDIR"/deb2
+bash tool_extr_deb.sh "$TMPDIR"/"$NAME_DEB2" "$TMPDIR"/deb2
 if [ $? -eq 0 ];then true;else exit 1;fi
 
 TARGET_DEB1_PATH=$(find "$TMPDIR"/deb1 -name "$TARGET_DEB1")
