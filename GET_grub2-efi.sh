@@ -3,7 +3,7 @@
 set -e
 
 SRC_FILE="sources.grub2-efi.txt"
-PKG_DIR="pkg.grub2-efi"
+PKG_DIR="dependency.grub2-efi"
 TMPDIR="_tmp"
 
 URL_FILE=$(awk '/^URL_FILE/ {print $NF}' "$SRC_FILE")
