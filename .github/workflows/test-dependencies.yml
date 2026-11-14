@@ -6,7 +6,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  test-win32:
+    runs-on: windows-2025
+    steps:
+      - name: Grab win32-stuff
+        uses: actions/checkout@v4
+        with:
+          repository: carlos-a-g-h/win32-stuff
+          ref: main
+      - name: List content
+        run: |
+          dir
+  test-external:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repo
