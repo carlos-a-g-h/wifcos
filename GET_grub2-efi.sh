@@ -3,12 +3,12 @@
 set -e
 
 SRC_FILE="sources.grub2-efi.txt"
-PKG_DIR="dep.grub2-efi"
+PKG_DIR="pkg.grub2-efi"
 TMPDIR="_tmp"
 
-NAME_FILE=$(awk "/NAME_FILE/" "$SRC_FILE" | sed 's/NAME_FILE //')
-URL_FILE=$(awk "/URL_FILE/" "$SRC_FILE" | sed 's/URL_FILE //')
-HASH_SHA256=$(awk "/HASH_SHA256/" "$SRC_FILE" | sed 's/HASH_SHA256 //')
+URL_FILE=$(awk '/^URL_FILE/ {print $NF}' "$SRC_FILE")
+NAME_FILE=$(awk -F "/" '/^URL_FILE/ {print $NF}' "$SRC_FILE")
+HASH_SHA256=$(awk '/^HASH_SHA256/ {print $NF}' "$SRC_FILE")
 
 mkdir -vp "$TMPDIR"
 

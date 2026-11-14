@@ -23,4 +23,3 @@ URL_DEB2 http://ftp.us.debian.org/debian/pool/main/s/systemd-boot-efi-amd64-sign
 SHA256_DEB2 b972c666f3d76899e702fe27865bf5da200b916e7bf4739c69aca0efc79c6d4c
 
 TARGET_DEB2 systemd-bootx64.efi.signed
-

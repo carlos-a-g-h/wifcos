@@ -1,6 +1,8 @@
 name: Test dependencies
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -11,16 +13,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Grub2 EFI
-        run: bash mkdep_grub2-efi.sh
+        run: bash GET_grub2-efi.sh
 
       - name: grubinst
-        run: bash mkdep_grubinst.sh
+        run: bash GET_grubinst.sh
 
       - name: Grub4DOS
-        run: bash mkdep_grub4dos.sh
+        run: bash GET_grub4dos.sh
 
       - name: SystemD-Boot
-        run: bash mkdep_systemd-boot.sh
+        run: bash GET_systemd-boot.sh
 
-      - name: Run a multi-line script
-        run: find dep.*
+      - name: Run find
+        run: find dependency.*
