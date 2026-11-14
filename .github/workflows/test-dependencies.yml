@@ -22,5 +22,5 @@ jobs:
       - name: SystemD-Boot
         run: bash GET_systemd-boot.sh
 
-      - name: Run a multi-line script
-        run: find dep.*
+      - name: Run find
+        run: find dependency.*
