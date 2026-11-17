@@ -18,6 +18,17 @@ jobs:
         run: |
           dir
 
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Check Tkinter availability
+        run: |
+          python -c "import sys; print(sys.executable); print(sys.version)"
+          where.exe python
+          python -c "import tkinter; print(tkinter.__file__); print(tkinter.TkVersion)"
+
   test-external:
     runs-on: ubuntu-24.04
     steps:
