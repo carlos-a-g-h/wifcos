@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-win32:
+  test-python:
     runs-on: windows-2025
     steps:
       - name: Grab win32-stuff
