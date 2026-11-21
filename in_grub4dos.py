@@ -1,78 +1,45 @@
 #!/usr/bin/python3
 
+from ctypes import WinDLL
+
 from pathlib import Path,WindowsPath
 from typing import Mapping,Optional,Union
 
-from WDisks import from_mountpoint_get_volume_ex
+from WDisks import (
+	init_kernel32 as WDisks_Client,
+	from_mountpoint_get_volume_ex,
+	mount_volume,
+	get_free_mountpoint,
+	get_winvol_boot,
+	get_winvol_system
+)
 from WUtils_windows import wsubproc,copy_files
+
+from depmgmt import (
+	get_fpath_grldr,
+	get_fpath_grldr_mbr,
+	get_fpath_grubinst_exe
+)
 
 _MENU_LST_FILENAME="menu.lst"
 
-_MENU_LST_CONTENTS="""
-timeout 10
+_MENU_LST_CONTENT_BOOTMGR="""
+Windows
+chainloader /bootmgr
+"""
 
-title Quit
-quit
-
+_MENU_LST_CONTENT_OPTS="""
 title Reboot
 reboot
 
 title Shutdown
 halt
 """
-
-def get_path_grldr(
-		basedir:Path,
-		check_only:bool=False
-	)->Optional[Path]:
-
-	pl=basedir.joinpath(
-		"dependency.grub4dos",
-		"grub4dos",
-		"grldr"
-	)
-	if not pl.is_file():
-		return None
-
-	print("GRLDR:",pl)
-
-	return pl.absolute()
-
-def get_path_grldr_mbr(
-		basedir:Path,
-		check_only:bool=False
-	)->Optional[Path]:
-
-	pl=basedir.joinpath(
-		"dependency.grub4dos",
-		"grub4dos",
-		"grldr.mbr"
-	)
-	if not pl.is_file():
-		return None
-
-	print("GRLDR.MBR:",pl)
-
-	return pl.absolute()
-
-def get_path_grubinst_exe(basedir:Path)->Optional[Path]:
-
-	pl=basedir.joinpath(
-		"dependency.grubinst",
-		"grubinst",
-		"grubinst.exe"
-	)
-	if not pl.is_file():
-		return None
-
-	print("GRUBINST.EXE:",pl)
-
-	return pl.absolute()
-
 def copy_menu_lst(
 		fpath:Optional[Path],
 		dpath:Path,
-		debug:bool=False
+		local:bool=False,
+		debug:bool=False,
 	)->bool:
 
 	dpath_ok=dpath.joinpath(_MENU_LST_FILENAME)
@@ -80,7 +47,11 @@ def copy_menu_lst(
 	if fpath is None:
 
 		try:
-			dpath_ok.write_text(_MENU_LST_CONTENTS)
+			dpath_ok.write_text(
+				"timeout 10\n"
+				f"{_MENU_LST_CONTENT_BOOTMGR}\n"
+				f"{_MENU_LST_CONTENT_OPTS}"
+			)
 		except Exception as exc:
 			print("FATAL:",exc)
 			return False
@@ -89,15 +60,9 @@ def copy_menu_lst(
 
 	if fpath.is_file():
 
-		# if debug:
-		# 	print("Copying provided MENU.LST...")
-
 		return copy_files(fpath,dpath_ok)
 
 	if fpath.is_dir():
-
-		# if debug:
-		# 	print("FInding a MENU.LST in the provided directory...")
 
 		fpath_ok=fpath.joinpath(_MENU_LST_FILENAME)
 
@@ -108,7 +73,11 @@ def copy_menu_lst(
 		if not fpath_ok.is_file():
 
 			try:
-				dpath_ok.write_text(_MENU_LST_CONTENTS)
+				dpath_ok.write_text(
+					"timeout 10\n"
+					f"{_MENU_LST_CONTENT_BOOTMGR}\n"
+					f"{_MENU_LST_CONTENT_OPTS}"
+				)
 			except Exception as exc:
 				print("FATAL:",exc)
 				return False
@@ -133,12 +102,12 @@ def main_grubinst(
 	##############################################################################
 
 	step=step+1
-	fpath_grubinst_exe=get_path_grubinst_exe(basedir)
+	fpath_grubinst_exe=get_fpath_grubinst_exe(basedir)
 	if fpath_grubinst_exe is None:
 		return (step,"GRUBINST.EXE not found",{})
 
 	step=step+1
-	fpath_grldr=get_path_grldr(basedir)
+	fpath_grldr=get_fpath_grldr(basedir)
 	if fpath_grldr is None:
 		return (step,"GRLDR not found",{})
 
@@ -241,6 +210,83 @@ def main_grubinst(
 
 	return (0,None,{})
 
+# def step_get_disk_and_vols(
+# 		plsize_system:int=-1,
+# 		plsize_boot:int=-1,
+# 		test_only:bool=False
+# 	)->Mapping:
+
+# 	# ONLY FOR DUAL BOOT SETUPS
+
+# 	# Returns the disk index, and the volume(s) holding the boot partition and
+# 	# the system partition, and it makes sure that both are mounted
+
+# 	# NOTE:
+# 	# by providing payload sizes
+
+# 	k32:WinDLL=WDisks_Client()
+
+# 	volsystem=get_winvol_system(k32,get_spm=True,get_voldata=True)
+
+# 	volsystem_extents=volsystem.get("volume_extents",[])
+# 	if len(volsystem_extents)==0:
+# 		return {"error":"(volsystem) no volume extents found"}
+
+# 	disk_index1=volsystem_extents[0].get("DiskNumber",-1)
+# 	if disk_index1<0:
+# 		return {"error":"(volsystem) disk index not found"}
+
+# 	# Since this is teh system drive, it should have ONE volume path
+
+# 	volsystem_paths=volsystem.get("volume_paths",[])
+# 	if len(volsystem_paths)==0:
+# 		return {"error":"(volsystem) volume paths not found"}
+
+# 	drive_letter1=volsystem_paths[0]
+
+# 	volboot=get_winvol_boot(k32,get_spm=True,get_voldata=True)
+
+# 	volboot_extents=volboot.get("volume_extents",[])
+# 	if len(volboot_extents)==0:
+# 		return {"error":"(volboot) no volume extents found"}
+
+# 	disk_index2=volboot_extents[0].get("DiskNumber",-1)
+# 	if disk_index2<0:
+# 		return {"error":"(volboot) disk index not found"}
+
+# 	if not disk_index1==disk_index2:
+# 		return {"error":"(volboot) disk indexes do not match"}
+
+# 	drive_letter2:Optional[str]=None
+
+# 	volboot_paths=volboot.get("volume_paths",[])
+
+# 	empty=(len(volboot_paths)==0)
+
+# 	if not empty:
+
+# 		drive_letter2=volboot_paths[0]
+
+# 	if empty:
+
+# 		volboot_name=volboot.get("volume_name")
+
+# 		if not test_only:
+
+# 			drive_letter2=get_free_mountpoint(k32,ret_as_drive=True)
+
+# 			if not mount_volume(volboot_name,drive_letter2):
+# 				return {"error","Failed to mount the boot partition"}
+
+# 	if drive_letter1 == drive_letter2:
+
+# 		pass
+
+# 	return {
+# 		"drive_system":drive_letter1,
+# 		"drive_boot":drive_letter2
+# 	}
+
 def main_bcd_system(
 		basedir:Path,
 		drive_letter:str,
@@ -254,31 +300,17 @@ def main_bcd_system(
 	step=0
 
 	step=step+1
-	fpath_grldr=get_path_grldr(basedir)
+	fpath_grldr=get_fpath_grldr(basedir)
 	if fpath_grldr is None:
 		return (step,"GRLDR not found",{})
 
 	step=step+1
-	fpath_grldr_mbr=get_path_grldr_mbr(basedir)
+	fpath_grldr_mbr=get_fpath_grldr_mbr(basedir)
 	if fpath_grldr_mbr is None:
 		return (step,"GRLDR.MBR not found",{})
 
 	# TODO:
 	# must detect the boot partition specifically in order to copy the files
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
