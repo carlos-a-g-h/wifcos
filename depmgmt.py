@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Optional,Union
 
+from utils import get_path_from_str
+
 def get_fpath(
 		basedir:Path,
 		pathlst:list,
@@ -145,59 +147,108 @@ def from_line_get_resource(
 
 	if not spec_dest:
 
-		if line_ok.startswith("/"):
-			line_ok=f".{line_ok}"
+		if dest_only:
+			return get_path_from_str(
+				spec_dest,
+				anchor=basedir
+			)
 
-		pl=util_path_abs_to_rel(
-			basedir,
-			Path(line_ok.strip()),
+		if test:
+			return get_path_from_str(
+				spec_dest,
+				anchor=basedir,
+				must_exist=True,
+				verify_existance=True
+			)
+
+		return get_path_from_str(
+			spec_dest,
+			anchor=basedir,
 			must_exist=True
 		)
-		print("PL:",pl)
-		if pl is None:
-			return None
 
-		dest=pl.relative_to(basedir)
-		if dest_only:
-			return dest
-
-		return (pl,dest)
+	# Specified destination
 
 	parts=line_ok.split(sep=":")
 	if not len(parts)==2:
 		# print(2)
 		return None
 
-	pl_str=parts[0].strip()
-	dest_str=parts[1].strip()
+	orig_str:Optional[str]=None
+	orig_ok:Optional[Path]=None
 
-	if len(pl_str)==0:
-		return None
+	if not dest_only:
 
+		orig_str=parts[0].strip()
+		if len(orig_str)==0:
+			if test:
+				return False
+			return None
+
+	dest_str=parts[0].strip()
 	if len(dest_str)==0:
+		if test:
+			return False
 		return None
 
-	if pl_str.startswith("/"):
-		pl_str=f".{pl_str}"
+	if not dest_only:
 
-	if dest_str.startswith("/"):
-		dest_str=f".{dest_str}"
+		orig_ok=get_path_from_str(
+			parts[0].strip(),
+			anchor=basedir,
+			must_exist=True,
+		)
+		if orig_ok is None:
+			if test:
+				return False
+			return None
 
-	dest=util_path_abs_to_rel(
-		None,
-		Path(dest_str.strip())
+	dest_ok=get_path_from_str(
+		parts[1].str(),
+		anchor=basedir
 	)
+	if dest_ok is None:
+		if test:
+			return False
+		return None
+
+	# DEST
+
 	if dest_only:
-		# print(3)
-		return dest
 
-	pl=util_path_abs_to_rel(
-		basedir,
-		Path(pl_str.strip()),
-		must_exist=True
-	)
-	if pl is None:
-		# print(4)
-		return None
+		return dest_ok
 
-	return (pl,dest)
+	# ( ORIG , DEST )
+
+	if test:
+		return True
+	return (orig_ok,dest_ok)
+
+def process_rscl(
+		basedir:Path,
+		rsclist:list,
+		test:bool=False
+	)->list:
+
+	# From resource list get resources
+
+	resources=[]
+	fatal=False
+
+	for line in rsclist:
+
+		resources.append(
+			from_line_get_resource(
+				basedir,line,
+				test=test
+			)
+		)
+
+		if resources[-1] is None:
+			fatal=True
+			break
+
+	if fatal:
+		return []
+
+	return resources

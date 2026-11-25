@@ -15,14 +15,25 @@ from WDisks import (
 	init_kernel32 as WDisks_Client,
 	# from_mountpoint_get_volume_ex,
 	mount_volume,
+	# mount_esp_partition,
 	get_free_mountpoint,
 	get_winvol_boot,
 	get_winvol_system
 )
-from depmgmt import from_line_get_resource
+from depmgmt import process_rscl
+from utils import get_path_from_str,get_total_size
 
 _FWTYPE_LEGACY=1
 _FWTYPE_UEFI=2
+
+_KN_LEGACY="legacy"
+_KN_UEFI="uefi"
+_KN_FILES="files"
+_KN_GRUB4DOS="config.grub4dos"
+_KN_GRUB2="config.grub2"
+_KN_SYSTEMDBOOT="config.systemd-boot"
+_KN_BOOTPART="content.boot"
+_KN_SYSPART="content.system"
 
 def util_from_yaml_read_str(value:Optional[str])->Optional[str]:
 
@@ -42,46 +53,36 @@ def step_read_config(
 		test_only:bool=False
 	)->Union[bool,Mapping]:
 
-	path_config=basedir.joinpath("install.yml")
+	stem="install"
+
+	path_config=basedir.joinpath(f"{stem}.yml")
 	if not path_config.is_file():
-		path_config=basedir.joinpath("install.yaml")
+		path_config=basedir.joinpath(f"{stem}.yaml")
 	if not path_config.is_file():
-		raise FileNotFoundError("install manifest not found")
+		raise FileNotFoundError(f"{stem}.yaml (or yml) manifest not found")
 
 	data=yaml_load(
 		path_config.read_text(),
 		Loader=yaml_Loader
 	)
 
-	print("DATA:",data)
+	print("FROM YAML:",data)
 
 	err_found=False
 	err_msg:Optional[str]=None
 
 	# VERSION 1
 
-	kn_legacy="legacy"
-	kn_uefi="uefi"
-
-	kn_files="files"
-
-	kn_grub4dos="config.grub4dos"
-	kn_grub2="config.grub2"
-	kn_systemdboot="config.systemd-boot"
-
-	kn_boot_part="content.boot"
-	kn_system_part="content.system"
-
 	config_ready={}
 
 	if fwtype==_FWTYPE_LEGACY:
 
-		k=kn_legacy
+		k=_KN_LEGACY
 		if k in data.keys():
 			if not isinstance(data[k],Mapping):
 				return {"error":f"expected '{k}' to be a map"}
 
-			kk=kn_grub4dos
+			kk=_KN_GRUB4DOS
 			if kk in data[k].keys():
 				v=util_from_yaml_read_str(data[k][kk])
 				if v is None:
@@ -89,12 +90,12 @@ def step_read_config(
 
 				config_ready.update({kk:v})
 
-			kk=kn_files
+			kk=_KN_FILES
 			if kk in data[k].keys():
 				if not isinstance(data[k][kk],Mapping):
 					return {"error":f"expected '{k}/{kk}' to be a map"}
 
-				for kkk in (kn_boot_part,kn_system_part):
+				for kkk in (_KN_BOOTPART,_KN_SYSPART):
 
 					if kkk not in data[k][kk].keys():
 						continue
@@ -106,15 +107,14 @@ def step_read_config(
 
 					config_ready.update({kkk:data[k][kk][kkk]})
 
-
 	if fwtype==_FWTYPE_UEFI:
 
-		k=kn_uefi
+		k=_KN_UEFI
 		if k in data.keys():
 			if not isinstance(data[k],Mapping):
 				return {"error":f"expected '{k}' to be a map"}
 
-			kk=kn_grub2
+			kk=_KN_GRUB2
 			if kk in data[k].keys():
 				v=util_from_yaml_read_str(data[k][kk])
 				if v is None:
@@ -122,7 +122,7 @@ def step_read_config(
 
 				config_ready.update({kk:v})
 
-			kk=kn_systemdboot
+			kk=_KN_SYSTEMDBOOT
 			if kk in data[k].keys():
 				v=util_from_yaml_read_str(data[k][kk])
 				if v is None:
@@ -130,12 +130,12 @@ def step_read_config(
 
 				config_ready.update({kk:v})
 
-			kk=kn_files
+			kk=_KN_FILES
 			if kk in data[k].keys():
 				if not isinstance(data[k][kk],Mapping):
 					return {"error":f"expected '{k}/{kk}' to be a map"}
 
-				for kkk in (kn_boot_part,kn_system_part):
+				for kkk in (_KN_BOOTPART,_KN_SYSPART):
 
 					if kkk not in data[k][kk].keys():
 						continue
@@ -149,13 +149,13 @@ def step_read_config(
 
 	if not err_found:
 
-		k=kn_files
+		k=_KN_FILES
 		if k in data.keys():
 
 			if not isinstance(data[k],Mapping):
 				return {"error":f"expected '{k}' to be a map"}
 
-			for kk in (kn_boot_part,kn_system_part):
+			for kk in (_KN_BOOTPART,_KN_SYSPART):
 
 				if kk not in data[k].keys():
 					continue
@@ -171,6 +171,119 @@ def step_read_config(
 		return {"error":err_msg}
 
 	return config_ready
+
+def step_from_config_get_files(
+		basedir:Path,
+		config:Mapping
+	)->Mapping:
+
+	result={}
+
+	for k in (
+
+			# General files
+				f"{_KN_FILES}/{_KN_BOOTPART}",
+				f"{_KN_FILES}/{_KN_SYSPART}",
+
+			# Legacy boot specific files
+				f"{_KN_LEGACY}/{_KN_FILES}/{_KN_BOOTPART}",
+				f"{_KN_LEGACY}/{_KN_FILES}/{_KN_SYSPART}",
+
+			# UEFI Boot specific files
+				f"{_KN_UEFI}/{_KN_FILES}/{_KN_BOOTPART}",
+				f"{_KN_UEFI}/{_KN_FILES}/{_KN_SYSPART}",
+		):
+
+		if k not in config.keys():
+			continue
+
+		if not isinstance(config[k],list):
+			break
+
+		result.update({k:process_rscl(config[k])})
+
+		if len(result[k])==0:
+			return {"error":f"value in {k}"}
+			break
+
+	return result
+
+def step_from_config_get_availops(
+		basedir:Path,
+		fwtype:int,
+		config:Mapping
+	)->Mapping:
+
+	# Get the available options from the config as well as verify the existante
+	# of the file paths provided by the vendor/guest
+
+	availops=[]
+
+	if fwtype==_FWTYPE_LEGACY:
+
+		found=0
+
+		for k in [_KN_GRUB4DOS]:
+
+			ok=(k in config.keys())
+
+			if not ok:
+
+				continue
+
+			if ok:
+
+				if not isinstance(config[k],str):
+					return {"error":f"declared {k} is not a string"}
+
+				if not get_path_from_str(config[k].strip(),basedir,verify_existance=True):
+					return {"error":f"declared {k} not found"}
+
+			found=found+1
+			availops.append(k)
+
+		if found==0:
+			return {
+				"error":f"config for grub4dos ({_KN_GRUB4DOS}) is missing"
+			}
+
+
+	if fwtype==_FWTYPE_UEFI:
+
+		found=0
+
+		for k in [_KN_GRUB2,_KN_SYSTEMDBOOT]:
+
+			ok=(k in config.keys())
+
+			if not ok:
+
+				continue
+
+			if ok:
+
+				if not isinstance(config[k],str):
+					return {"error":f"declared {k} is not a string"}
+
+				if not get_path_from_str(
+						config[k].strip(),
+						anchor=basedir,
+						verify_existance=True
+					):
+					return {"error":f"declared {k} not found"}
+
+			found=found+1
+			availops.append(k)
+
+		if found==0:
+			return {
+				"error":(
+					f"systemd-boot ({_KN_SYSTEMDBOOT}) and "
+						f"grub2 ({_KN_GRUB2}) configs are missing"
+					)
+			}
+
+	return {"availops":availops}
 
 def step_get_disk_and_vols(
 		plsize_system:int=0,
@@ -231,10 +344,12 @@ def step_get_disk_and_vols(
 
 		if not test_only:
 
-			drive_letter2=get_free_mountpoint(k32,ret_as_drive=True)
+			letter2=get_free_mountpoint(k32,ret_as_drive=True)
 
-			if not mount_volume(volboot_name,drive_letter2):
+			if not mount_volume(volboot_name,letter2):
 				return {"error","Failed to mount the boot partition"}
+
+			drive_letter2=f"{letter2}\\"
 
 	if plsize_boot>0 and plsize_system>0:
 
@@ -282,7 +397,7 @@ def step_get_disk_and_vols(
 		"drive_boot":drive_letter2
 	}
 
-def main(basedir:Path):
+def main(basedir:Path,test:bool=False):
 
 	if not query_proc_priv_info():
 		print("Run as administrator")
@@ -290,24 +405,38 @@ def main(basedir:Path):
 
 	env_gain_extra_priv()
 
-	fwtype=get_fwtype(import_GetFwType())
-	if fwtype not in (_FWTYPE_LEGACY,_FWTYPE_UEFI):
+
+	print("\nDATA_FWTYPE:")
+	data_fwtype=get_fwtype(import_GetFwType())
+	if data_fwtype not in (_FWTYPE_LEGACY,_FWTYPE_UEFI):
 		print(
 			"Cannot determine wether the "
 				"system is UEFI or BIOS/LEGACY"
 		)
 		return None
+	print(data_fwtype)
 
-	step1_res=step_read_config(basedir,fwtype=fwtype)
+	print("\nDATA_CONFIG:")
+	data_config=step_read_config(basedir,fwtype=data_fwtype)
+	print(data_config)
 
-	print("STEP1:",step1_res)
+	print("\nDATA_AVAILOPS:")
+	data_availops=step_from_config_get_availops(basedir,data_fwtype,data_config)
+	print(data_availops)
 
-	step2_res=step_get_disk_and_vols(plsize_boot=0,plsize_system=0)
+	print("\nDATA_FS:")
+	data_fs=step_get_disk_and_vols(plsize_boot=0,plsize_system=0,test_only=test)
+	print(data_fs)
 
-	print("STEP2:",step2_res)
+	req_size_boot=0
+	req_size_system=0
+
+	print("\nRSCL")
+	data_rscl=step_from_config_get_files(basedir,config)
+	print(data_rscl)
 
 if __name__=="__main__":
 
 	basedir=Path(sys_argv[0]).parent
 
-	main(basedir)
+	main(basedir,True)

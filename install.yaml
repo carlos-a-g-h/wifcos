@@ -1,0 +1,27 @@
+version: 1
+
+files:
+
+  content.boot:
+    - "test_guest/Files_Boot"
+  content.system: []
+
+legacy:
+
+  files:
+    content.boot: []
+    content.system: []
+
+  config.gru4dos: "./test_guest/Test_menu.lst"
+
+uefi:
+
+  files:
+    content.boot: []
+    content.system: []
+
+  config.grub2: \\test_guest\\Test_grub.cfg
+
+  config.systemd-boot: "/test_guest/Test_systemd-boot"
+  # config.systemd-boot: "./test_guest/Test_systemd-boot"
+  # config.systemd-boot: "../TEST/Test_systemd-boot.conf"
